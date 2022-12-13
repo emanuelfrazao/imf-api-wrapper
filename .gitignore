@@ -1,0 +1,5 @@
+# exclude Jupyter notebooks
+*.ipynb
+
+# exclude python cache
+__pycache__/
