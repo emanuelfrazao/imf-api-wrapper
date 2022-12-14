@@ -6,6 +6,7 @@ from pandas import DataFrame
 from url import URLBuilder
 from utils import get_nested_value
 
+BASE_URL = "http://dataservices.imf.org/REST/SDMX_JSON.svc"
 
 def datasets(dataset_filter: Optional[str] = None,
              description_filter: Optional[str] = None,
@@ -51,5 +52,5 @@ def datasets(dataset_filter: Optional[str] = None,
         
 
         
-        
+def datastruct
         

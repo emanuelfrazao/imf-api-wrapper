@@ -6,16 +6,17 @@ description: explore imf data and API on commodities and others
 
 ## external references
 
-The API has little to no documentation, but there are 2 links worth checking:
+The API has little to no documentation, but there are 3 links worth checking:
 
+* [API "docs"](http://dataservices.imf.org/REST/SDMX_JSON.svc/helphttps:/)
 * [IMF's own "help page"](https://datahelp.imf.org/knowledgebase/articles/838041-sdmx-2-0-restful-web-service)
-* [a 3-part sequence of blog posts for python describing some functionality of the API](http://www.bd-econ.com/imfapi1.html)
+* [a 3-part sequence of blog posts (for python) describing some functionality of the API](http://www.bd-econ.com/imfapi1.html)
 
 ## personal notes
 
 (- building on both documentations, and some exploration)
 
-every public API route corresponds to a `get` method.
+every publicly [documented](http://dataservices.imf.org/REST/SDMX_JSON.svc/helphttps:/) API route corresponds to a `get` method.
 
 ### `get` method routes
 
@@ -27,13 +28,13 @@ the responses from all of the main `get` paths are given as `json` and meet the 
 
 ```json
 {
-    < root key - randomly corresponding to call >: {
+    < single root key - randomly corresponding to call >: {
         "@xmlns:xsd": "http://www.w3.org/2001/XMLSchema",
         "@xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
         "@xmlns": "http://www.SDMX.org/resources/SDMXML/schemas/v2_0/message",
         "@xsi:schemaLocation": "http://www.SDMX.org/resources/SDMXML/schemas/v2_0/structure https://registry.sdmx.org/schemas/v2_0/SDMXStructure.xsd http://www.SDMX.org/resources/SDMXML/schemas/v2_0/message https://registry.sdmx.org/schemas/v2_0/SDMXMessage.xsd",
         "Header": < meta information - useless >,
-        < ... call related keys > : { ... }
+        < ... call related sub keys > : { ... }
     }
 }
 ```
@@ -42,13 +43,15 @@ the schema links, meanwhile, do not work (!)
 
 #### `Dataflow`
 
-* description: get the datasets available
-* url: `http://dataservices.imf.org/REST/SDMX_JSON.svc/Dataflow`
-* response schema specificity:
+* **description**: get the datasets available
+* **url**: `http://dataservices.imf.org/REST/SDMX_JSON.svc/Dataflow`
+* **known errors**:
+  * `400`: if one writes `<url>/*`
+* **response schema specificity**:
   * root key: `"Structure"`
   * sub-keys:
-    * `"Dataflows"` - with expectedly a single key:
-      * `"Dataflow"` - a list of items of the form:
+    * `"Dataflows"` - a mapping with expectedly a single key:
+      * `"Dataflow"` - a list of items expectedly of the form:
 
 ```json
 
@@ -69,24 +72,51 @@ the schema links, meanwhile, do not work (!)
 }
 ```
 
-#### DataStructure
+#### `CompactData`
 
-DataStructure method returns the structure of the dataset.
-In order to obtain the data use the following request:
+* **description**: get the data (either filtered or not) for a given dataset
+* **notes**:
+  * each dataset has its own *dimensions*, which stand for positional parameters
+  * arguments to these parameters are unreliable - in that they are required for some datasets and not for others (e.g., not required for `PCPS` and required for `BOP`)
+* **url**: `http://dataservices.imf.org/REST/SDMX_JSON.svc/CompactData/{dataset}[/{...positional}][/?{...options}]`
+* **arguments**: `<base>/{arg_to_dim1}+{arg_to_dim1}.{arg_to_dim2}.{arg_to_dim3}`
+  * query:
+* **known errors**:
+  * `400`:
+    * if one writes `<main_url>/` (with the ending backslash)
+    * if one writes `<main_url>/<suffix>[/...]` such that `<suffix>` does not correspond to a dataset
+* **response schema specificity**:
+  * root key: `"CompactData"`
+  * sub keys:
+    * `"Dataset"` - a mapping with one relevant key:
+      * `"Series"` - a list of items, each a mapping with keys:
+        * `"@FREQ"`:
+        * `""`:
+        * `""`:
+        * `""`:
+        * `""`:
+        * `""`:
+
+#### `DataStructure`
+
+* **description**: get the structure of the data on a given dataset - i.e.:
+  * its
+* **url**:
+  * base: `http://dataservices.imf.org/REST/SDMX_JSON.svc/DataStructure`
+  * required: `.../{dataset}`
+* **known errors**:
+  * `400`: if one writes `<base>/` (with the ending backslash)
+  * `500`: if one writes `<base>/<suffix>` such that `<suffix>` does not correspond to a `dataset`
+* **response schema specificity**:
+  * root key: `"Structure"`
+  * sub-keys:
+    * `"
 
 ```
 http://dataservices.imf.org/REST/SDMX_JSON.svc/DataStructure/{database ID}
 ```
 
 ## 1.3 CompactData Method
-
-CompactData method returns the compact data message.
-In order to obtain the data use the following request:
-
-<pre><a href="http://dataservices.imf.org/REST/SDMX_JSON.svc/CompactData/" title="Link: http://dataservices.imf.org/REST/SDMX_JSON.svc/CompactData/">http://dataservices.imf.org/REST/SDMX_JSON.svc/CompactData/</a><span>{database ID}/{frequency}.{item1 from
-dimension1}+{item2 from dimension1}+{item N from dimension1}.{item1 from
-dimension2}+{item2 from dimension2}+{item M from dimension2}?startPeriod={start
-date}&endPeriod={end date}</span><br/></pre>
 
 ## 1.4 MetadataStructure Method
 
