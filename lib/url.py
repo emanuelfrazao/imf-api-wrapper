@@ -29,7 +29,7 @@ class URLBuilder:
     def __repr__(self):
         return f"URLBuilder({self._url})"
     
-def build_url(base, subpaths, positional_params = [], options = []):
+def build_url(base, subpaths, positional_params = [], options = {}):
     
     builder = URLBuilder(base)
     
@@ -40,7 +40,7 @@ def build_url(base, subpaths, positional_params = [], options = []):
         builder.add_positional_arguments(positional_params)
     
     if options:
-        builder.add_query(options)
+        builder.add_query(**options)
     
     return builder.to_string()
     
