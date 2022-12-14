@@ -1,30 +1,61 @@
 ---
-title: IMF
-description: explore imf data and API on commodities and others
+title: IMF API wrapper
+description: build a `python` wrapper API for IMF's API that is (as opposed to the latter -) consistent, transparent, and easy to use.
 ---
-# API documentation
+# intro
 
-## external references
+## context
 
-The API has little to no documentation, but there are 3 links worth checking:
+so, the IMF (as in, the International Monetary Fund) has a bunch of public data - and I'm wanting to scrape it.
 
-* [API "docs"](http://dataservices.imf.org/REST/SDMX_JSON.svc/helphttps:/)
-* [IMF's own "help page"](https://datahelp.imf.org/knowledgebase/articles/838041-sdmx-2-0-restful-web-service)
-* [a 3-part sequence of blog posts (for python) describing some functionality of the API](http://www.bd-econ.com/imfapi1.html)
+their website offers a (very poorly documented) API to extract (what seems to be -) most of their public data available.
 
-## personal notes
+the API, on top of not being well documented, is somewhat opaque and weirdly structured - but still, follows a discernable logic.
 
-(- building on both documentations, and some exploration)
+there are 2 public unofficial wrappers (for `python` and `R`) developed for it, and they are good for referencing, but - 'are either not exhaustive (in the case of the `python` one), or follow the exact same logic of the API (the `R`'s), which (again!) is not great (!)
 
-every publicly [documented](http://dataservices.imf.org/REST/SDMX_JSON.svc/helphttps:/) API route corresponds to a `get` method.
+## goal
 
-### `get` method routes
+the goal of this project is to wrap another API around IMF's - initially it'll be just a `python` API (as in, a simple package - which would be nice to put into `PyPI`). eventually, we may actually keep scraping the IMF's API structure iot build a full-fledged RESTful experience - with (who knows? -) some free DNS (would be a nice candidate POC for `deno deploy`).
 
-every `get` route returns json data to the user.
+## extra info
 
-#### general response schema
+the IMF has a list of datasets available; this list is accessible through an API endpoint.
 
-the responses from all of the main `get` paths are given as `json` and meet the same basic schema , namely - and informally -:
+every dataset has time series data - multiple ones - each being -:
+
+* on some (from the API user's perspective - opaque) metric,
+* with some unit,
+
+datasets have names and descriptions, and may either consider a multi-year time period, or, specifically, a single year/quarter - in which case the interface differs.
+
+for each dataset, one can gather data on it (either all of the corresponding data, or only unspecific filtered parts - which is a problem from the user's perspective).
+
+most datasets - as is common for this domain - will have *indicators*, along with a common set of meta information.
+
+# references
+
+* **API resources**:
+
+  * [API "docs"](http://dataservices.imf.org/REST/SDMX_JSON.svc/helphttps:/)
+  * [API's own "help page"](https://datahelp.imf.org/knowledgebase/articles/838041-sdmx-2-0-restful-web-service)
+  * [(3-part series of) blog posts (for python) describing some functionality of the API](http://www.bd-econ.com/imfapi1.html)
+* **other wrappers**:
+
+  * [R's](https://github.com/mingjerli/IMFData/)
+  * [python's](https://pypi.org/project/imfpy/)
+
+# IMF's API investigation
+
+(- building on top of resources and other wrappers, and some exploration)
+
+## routes
+
+every publicly [documented](http://dataservices.imf.org/REST/SDMX_JSON.svc/helphttps:/) API route corresponds to a `GET` method and returns `json` data.
+
+### common response schema
+
+the responses from all of the main `GET` routes meet the same basic schema , namely - and informally -:
 
 ```json
 {
@@ -33,15 +64,17 @@ the responses from all of the main `get` paths are given as `json` and meet the 
         "@xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
         "@xmlns": "http://www.SDMX.org/resources/SDMXML/schemas/v2_0/message",
         "@xsi:schemaLocation": "http://www.SDMX.org/resources/SDMXML/schemas/v2_0/structure https://registry.sdmx.org/schemas/v2_0/SDMXStructure.xsd http://www.SDMX.org/resources/SDMXML/schemas/v2_0/message https://registry.sdmx.org/schemas/v2_0/SDMXMessage.xsd",
-        "Header": < meta information - useless >,
+        "Header": < so-called meta information - useless >,
         < ... call related sub keys > : { ... }
     }
 }
 ```
 
-the schema links, meanwhile, do not work (!)
+meanwhile, all' these schema links do not work
 
-#### `Dataflow`
+### `GET` routes
+
+#### `/Dataflow`
 
 * **description**: get the datasets available
 * **url**: `http://dataservices.imf.org/REST/SDMX_JSON.svc/Dataflow`
@@ -49,9 +82,9 @@ the schema links, meanwhile, do not work (!)
   * `400`: if one writes `<url>/*`
 * **response schema specificity**:
   * root key: `"Structure"`
-  * sub-keys:
+  * sub-keys - a single stream with:
     * `"Dataflows"` - a mapping with expectedly a single key:
-      * `"Dataflow"` - a list of items expectedly of the form:
+      * `"Dataflow"` - a list of items, each with 7 keys, but only 2 relevant (`"Name`, `"KeyFamilyRef"`):
 
 ```json
 
@@ -79,7 +112,8 @@ the schema links, meanwhile, do not work (!)
   * each dataset has its own *dimensions*, which stand for positional parameters
   * arguments to these parameters are unreliable - in that they are required for some datasets and not for others (e.g., not required for `PCPS` and required for `BOP`)
 * **url**: `http://dataservices.imf.org/REST/SDMX_JSON.svc/CompactData/{dataset}[/{...positional}][/?{...options}]`
-* **arguments**: `<base>/{arg_to_dim1}+{arg_to_dim1}.{arg_to_dim2}.{arg_to_dim3}`
+* **arguments**:
+  * positional (and optional):
   * query:
 * **known errors**:
   * `400`:
@@ -101,9 +135,7 @@ the schema links, meanwhile, do not work (!)
 
 * **description**: get the structure of the data on a given dataset - i.e.:
   * its
-* **url**:
-  * base: `http://dataservices.imf.org/REST/SDMX_JSON.svc/DataStructure`
-  * required: `.../{dataset}`
+* **url**: `http://dataservices.imf.org/REST/SDMX_JSON.svc/DataStructure/{dataset}`
 * **known errors**:
   * `400`: if one writes `<base>/` (with the ending backslash)
   * `500`: if one writes `<base>/<suffix>` such that `<suffix>` does not correspond to a `dataset`
