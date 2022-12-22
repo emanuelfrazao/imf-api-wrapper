@@ -1,5 +1,9 @@
 # exclude Jupyter notebooks
 *.ipynb
 
-# exclude python cache
+# exclude python cache and venv
 __pycache__/
+.vscode/
+
+# exclude temporary files
+tmp*

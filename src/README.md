@@ -1,6 +1,6 @@
 ---
-title: IMF API wrapper
-description: a `python` wrapper API for IMF's API that is consistent, transparent, and easy to use.
+title: IMF API wrapper specification
+description: project specification - context and technical details
 ---
 # intro
 
