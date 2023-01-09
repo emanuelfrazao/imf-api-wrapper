@@ -1,3 +1,7 @@
+from collections import deque
+
+global_last_requests = deque(maxlen=10)
+
 BASE_URL = "http://dataservices.imf.org/REST/SDMX_JSON.svc"
 
 BASE_HEADERS = {

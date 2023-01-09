@@ -137,8 +137,7 @@ meanwhile, all' these schema links do not work
 
 #### `DataStructure`
 
-* **description**: get the structure of the data on a given dataset - i.e.:
-  * its
+* **description**: get the structure of the data for a given dataset - i.e.
 * **url**: `http://dataservices.imf.org/REST/SDMX_JSON.svc/DataStructure/{dataset}`
 * **known errors**:
   * `400`: if one writes `<base>/` (with the ending backslash)
